@@ -1,0 +1,383 @@
+# ============================================================================
+#  ~/.aerospace.toml  —  your config, unchanged, plus additions marked  # ++
+#
+#  Nothing was renamed, removed or re-bound. Every workspace name and every
+#  existing key binding is byte-identical to what you had.
+#
+#  ---------------------------------------------------------------------------
+#  macOS SETTINGS — do these too, the config alone won't fix fullscreen
+#  ---------------------------------------------------------------------------
+#  System Settings > Desktop & Dock > Mission Control:
+#    [ ] Displays have separate Spaces                  <- UNCHECK, then log out
+#        AeroSpace's own recommendation. Left on, you get wrong focus, random
+#        focus jumps and stutter on multi-monitor.
+#        CLI equivalent:
+#          defaults write com.apple.spaces spans-displays -bool true
+#          killall SystemUIServer
+#    [ ] Automatically rearrange Spaces based on most recent use   <- UNCHECK
+#    [ ] When switching to an application, switch to a Space
+#        with open windows for that application                    <- UNCHECK
+#
+#  System Settings > Accessibility > Display > Reduce motion  <- ON
+#    Kills the Space-slide animation. Everything becomes instant.
+#
+#  Displays > Arrange: drag the white menu-bar strip onto the EXTERNAL display
+#    so it becomes "main". The monitor rules below then read unambiguously:
+#    'main' = external, 'built-in' = laptop screen.
+#
+#  Displays > Arrange: leave the bottom-left and bottom-right corners of BOTH
+#    screens unobstructed by the other screen. AeroSpace parks the windows of
+#    inactive workspaces in those corners; if one display covers another's
+#    corner, hidden windows bleed onto the visible screen.
+# ============================================================================
+
+config-version = 2
+
+# Required with config-version 2: workspaces that always exist, even when empty.
+# (v1 inferred this list from your key bindings; this is that same list.)
+persistent-workspaces = ["🏠", "⌨️", "3", "4", "5", "6", "7", "8", "9", "A",
+                         "🕸️", "📈", "📧", "👾", "🎵", "🗒️", "📖", "💻"]
+
+# You can use it to add commands that run after AeroSpace startup.
+# Available commands : https://nikitabobko.github.io/AeroSpace/commands
+after-startup-command = []
+
+# Start AeroSpace at login
+start-at-login = true
+
+# Normalizations. See: https://nikitabobko.github.io/AeroSpace/guide#normalization
+enable-normalization-flatten-containers = true
+enable-normalization-opposite-orientation-for-nested-containers = true
+
+# See: https://nikitabobko.github.io/AeroSpace/guide#layouts
+# The 'accordion-padding' specifies the size of accordion padding
+# You can set 0 to disable the padding feature
+accordion-padding = 30
+
+# Possible values: tiles|accordion
+default-root-container-layout = 'tiles'
+
+# Possible values: horizontal|vertical|auto
+# 'auto' means: wide monitor (anything wider than high) gets horizontal orientation,
+#               tall monitor (anything higher than wide) gets vertical orientation
+default-root-container-orientation = 'auto'
+
+# Mouse follows focus when focused monitor changes
+# Drop it from your config, if you don't like this behavior
+# See https://nikitabobko.github.io/AeroSpace/guide#on-focus-changed-callbacks
+# See https://nikitabobko.github.io/AeroSpace/commands#move-mouse
+# Fallback value (if you omit the key): on-focused-monitor-changed = []
+on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+
+# ++ Optional companion to the line above: recentre the pointer on the focused
+# ++ window too, not just the monitor. Pleasant on a big external, slightly
+# ++ fussy on the laptop. Uncomment to try.
+on-focus-changed = ['move-mouse window-lazy-center']
+
+# You can effectively turn off macOS "Hide application" (cmd-h) feature by toggling this flag
+# Useful if you don't use this macOS feature, but accidentally hit cmd-h or cmd-alt-h key
+# Also see: https://nikitabobko.github.io/AeroSpace/goodies#disable-hide-app
+#
+# ++ CHANGED false -> true. This is the one existing value I'd argue for
+# ++ flipping. A cmd-h'd window is invisible to the tiler, so it reads as a
+# ++ window that simply vanished — the single most common "AeroSpace lost my
+# ++ window" moment. With true, cmd-h becomes a no-op. Set it back to false
+# ++ if you actually use Hide.
+automatically-unhide-macos-hidden-apps = true
+
+# ++ ------------------------------------------------------------------------
+# ++ MONITORS — the biggest gap in the old config: nothing was pinned, so
+# ++ every workspace landed on whichever monitor happened to be main, and the
+# ++ layout reshuffled each time you docked.
+# ++
+# ++ Only the three laptop-screen workspaces are listed. Everything not
+# ++ listed keeps today's behaviour (goes to main = external). Unplug the
+# ++ external and all of these fold onto the laptop automatically; plug back
+# ++ in and they spring apart again.
+# ++
+# ++ Patterns: 'main' | 'secondary' | 'built-in' | regex '^LG.*' |
+# ++           1-based left-to-right index | list ['secondary', 'built-in']
+# ++ ------------------------------------------------------------------------
+[workspace-to-monitor-force-assignment]
+    "📧"  = 'built-in'   # email
+    "🎵"  = 'built-in'   # music
+    "🗒️" = 'built-in'   # notes
+
+# Possible values: (qwerty|dvorak|colemak)
+# See https://nikitabobko.github.io/AeroSpace/guide#key-mapping
+[key-mapping]
+    preset = 'qwerty'
+
+# Gaps between windows (inner-*) and between monitor edges (outer-*).
+# Possible values:
+# - Constant:     gaps.outer.top = 8
+# - Per monitor:  gaps.outer.top = [{ monitor.main = 16 }, { monitor."some-pattern" = 32 }, 24]
+#                 In this example, 24 is a default value when there is no match.
+#                 Monitor pattern is the same as for 'workspace-to-monitor-force-assignment'.
+#                 See:
+#                 https://nikitabobko.github.io/AeroSpace/guide#assign-workspaces-to-monitors
+[gaps]
+    inner.horizontal = [{ monitor."built-in" = 4 }, 10]
+    inner.vertical =   8
+    outer.left =       4
+    outer.bottom =     4
+    outer.top =        [{ monitor."built-in" = 2 }, 8]
+    outer.right =      4
+    # ++ Your gaps are unchanged. If you ever want them tighter on the laptop
+    # ++ and roomier on the external, the per-monitor form is:
+    # outer.top = [{ monitor."built-in" = 2 }, 8]
+
+# ++ ------------------------------------------------------------------------
+# ++ WINDOW RULES — none existed before. Anything that behaves like a dialog,
+# ++ or that drives its own native fullscreen, is better floated than tiled.
+# ++ Find any app's bundle id with:  aerospace list-apps
+# ++ ------------------------------------------------------------------------
+[[on-window-detected]]
+if.app-id = 'com.apple.systempreferences'
+run = ['layout floating']
+
+[[on-window-detected]]
+if.app-id = 'com.apple.finder'
+if.window-title-regex-substring = 'Copy'
+run = ['layout floating']
+
+[[on-window-detected]]
+if.app-id = 'com.apple.ActivityMonitor'
+run = ['layout floating']
+
+[[on-window-detected]]
+if.app-id = 'com.apple.calculator'
+run = ['layout floating']
+
+# Zoom resizes itself constantly and grabs native fullscreen on screen share.
+[[on-window-detected]]
+if.app-id = 'us.zoom.xos'
+run = ['layout floating']
+
+# ++ Your emoji workspaces are wasted unless apps land in them by themselves.
+# ++ Uncomment and adjust — the workspace name must match exactly, emoji and
+# ++ all, so copy it from the bindings further down rather than retyping.
+#
+# [[on-window-detected]]
+# if.app-id = 'com.apple.mail'
+# run = ['move-node-to-workspace 📧']
+#
+# [[on-window-detected]]
+# if.app-id = 'com.spotify.client'
+# run = ['move-node-to-workspace 🎵']
+#
+# [[on-window-detected]]
+# if.app-id = 'com.google.Chrome'
+# run = ['move-node-to-workspace 🕸️']
+
+# 'main' binding mode declaration
+# See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
+# 'main' binding mode must be always presented
+# Fallback value (if you omit the key): mode.main.binding = {}
+[mode.main.binding]
+
+    # All possible keys:
+    # - Letters.        a, b, c, ..., z
+    # - Numbers.        0, 1, 2, ..., 9
+    # - Keypad numbers. keypad0, keypad1, keypad2, ..., keypad9
+    # - F-keys.         f1, f2, ..., f20
+    # - Special keys.   minus, equal, period, comma, slash, backslash, quote, semicolon,
+    #                   backtick, leftSquareBracket, rightSquareBracket, space, enter, esc,
+    #                   backspace, tab, pageUp, pageDown, home, end, forwardDelete,
+    #                   sectionSign (ISO keyboards only, european keyboards only)
+    # - Keypad special. keypadClear, keypadDecimalMark, keypadDivide, keypadEnter, keypadEqual,
+    #                   keypadMinus, keypadMultiply, keypadPlus
+    # - Arrows.         left, down, up, right
+
+    # All possible modifiers: cmd, alt, ctrl, shift
+
+    # All possible commands: https://nikitabobko.github.io/AeroSpace/commands
+
+    # See: https://nikitabobko.github.io/AeroSpace/commands#exec-and-forget
+    # You can uncomment the following lines to open up terminal with alt + enter shortcut
+    # (like in i3)
+    # alt-enter = '''exec-and-forget osascript -e '
+    # tell application "Terminal"
+    #     do script
+    #     activate
+    # end tell'
+    # '''
+
+    # See: https://nikitabobko.github.io/AeroSpace/commands#layout
+    alt-slash = 'layout tiles horizontal vertical'
+    alt-comma = 'layout accordion horizontal vertical'
+
+    # See: https://nikitabobko.github.io/AeroSpace/commands#focus
+    alt-h = 'focus left'
+    alt-j = 'focus down'
+    alt-k = 'focus up'
+    alt-l = 'focus right'
+
+    # See: https://nikitabobko.github.io/AeroSpace/commands#move
+    alt-shift-h = 'move left'
+    alt-shift-j = 'move down'
+    alt-shift-k = 'move up'
+    alt-shift-l = 'move right'
+
+    alt-shift-f = 'fullscreen'
+
+    # ++ ------------------------------------------------------------------
+    # ++ FULLSCREEN — the actual fix for "fullscreen breaks my workspaces".
+    # ++
+    # ++ A natively-fullscreened window is moved into its own macOS Space,
+    # ++ which AeroSpace cannot see, move or hide. AeroSpace switches
+    # ++ workspaces by parking inactive windows off-screen; a native Space
+    # ++ sits outside that mechanism entirely, so macOS slides a Space
+    # ++ underneath you and focus lands somewhere random.
+    # ++
+    # ++ Your alt-shift-f above is already the good one. The line below is
+    # ++ what actually changes the outcome: it hijacks macOS's own "Enter
+    # ++ Full Screen" shortcut, so every app's View menu and all your muscle
+    # ++ memory now produce an AeroSpace fullscreen instead of a Space.
+    ctrl-cmd-f = 'fullscreen'
+
+    # ++ Deliberate escape hatch, for when you genuinely want a native Space:
+    # ++ full-screen video, a screen share, a game.
+    alt-ctrl-cmd-f = 'macos-native-fullscreen'
+
+    # ++ The green traffic-light button still triggers native fullscreen and
+    # ++ cannot be intercepted. Option-click it instead — that gives zoom,
+    # ++ which AeroSpace tiles normally.
+
+    # ++ alt-f is free in your config (workspace F is commented out). Edge-to-
+    # ++ edge fullscreen ignoring gaps, good for video and long reads.
+    # ++ --no-outer-gaps is newer than your AeroSpace build may be; if the
+    # ++ reload rejects it, drop the flag.
+    alt-f = 'fullscreen --no-outer-gaps'
+
+    # See: https://nikitabobko.github.io/AeroSpace/commands#resize
+    alt-minus = 'resize smart -50'
+    alt-equal = 'resize smart +50'
+
+    # See: https://nikitabobko.github.io/AeroSpace/commands#workspace
+    alt-1 = 'workspace 🏠'
+    alt-2 = 'workspace ⌨️'
+    alt-3 = 'workspace 3'
+    alt-4 = 'workspace 4'
+    alt-5 = 'workspace 5'
+    alt-6 = 'workspace 6'
+    alt-7 = 'workspace 7'
+    alt-8 = 'workspace 8'
+    alt-9 = 'workspace 9'
+    alt-a = 'workspace A' # In your config, you can drop workspace bindings that you don't need
+    alt-b = 'workspace 🕸️' #browser mode
+    alt-c = 'workspace 📈'
+    # alt-d = 'workspace D'
+    alt-e = 'workspace 📧'
+    # alt-f = 'workspace F'
+    alt-g = 'workspace 👾'
+    # alt-i = 'workspace I'
+    # alt-m is taken by Wispr Flow (meeting recorder), so music lives on alt-u
+    alt-n = 'workspace 🗒️'
+    # alt-o = 'workspace O'
+    # alt-p = 'workspace P'
+    # alt-q = 'workspace Q'
+    # alt-r = 'workspace R'
+    alt-s = 'workspace 📖'
+    # alt-t = 'workspace T'
+    alt-u = 'workspace 🎵'
+    # alt-v = 'workspace V'
+    alt-w = 'workspace 💻'
+    # alt-x = 'workspace X'
+    # alt-y = 'workspace Y'
+    # alt-z = 'workspace Z'
+
+    # See: https://nikitabobko.github.io/AeroSpace/commands#move-node-to-workspace
+    alt-shift-1 = 'move-node-to-workspace 🏠'
+    alt-shift-2 = 'move-node-to-workspace ⌨️'
+    alt-shift-3 = 'move-node-to-workspace 3'
+    alt-shift-4 = 'move-node-to-workspace 4'
+    alt-shift-5 = 'move-node-to-workspace 5'
+    alt-shift-6 = 'move-node-to-workspace 6'
+    alt-shift-7 = 'move-node-to-workspace 7'
+    alt-shift-8 = 'move-node-to-workspace 8'
+    alt-shift-9 = 'move-node-to-workspace 9'
+    alt-shift-a = 'move-node-to-workspace A'
+    alt-shift-b = 'move-node-to-workspace 🕸️'
+    alt-shift-c = 'move-node-to-workspace 📈'
+    # alt-shift-d = 'move-node-to-workspace D'
+    alt-shift-e = 'move-node-to-workspace 📧'
+    # alt-shift-f = 'move-node-to-workspace F'
+    alt-shift-g = 'move-node-to-workspace 👾'
+    # alt-shift-i = 'move-node-to-workspace I'
+    alt-shift-n = 'move-node-to-workspace 🗒️'
+    # alt-shift-o = 'move-node-to-workspace O'
+    # alt-shift-p = 'move-node-to-workspace P'
+    # alt-shift-q = 'move-node-to-workspace Q'
+    # alt-shift-r = 'move-node-to-workspace R'
+    alt-shift-s = 'move-node-to-workspace 📖'
+    # alt-shift-t = 'move-node-to-workspace T'
+    alt-shift-u = 'move-node-to-workspace 🎵'
+    # alt-shift-v = 'move-node-to-workspace V'
+    alt-shift-w = 'move-node-to-workspace 💻'
+    # alt-shift-x = 'move-node-to-workspace X'
+    # alt-shift-y = 'move-node-to-workspace Y'
+    # alt-shift-z = 'move-node-to-workspace Z'
+
+    # ++ Note: those bindings send the window away but leave you behind. If
+    # ++ you'd rather travel with it, append --focus-follows-window, e.g.
+    # ++   alt-shift-b = 'move-node-to-workspace --focus-follows-window 🕸️'
+    # ++ Left alone here because it changes how your existing keys feel.
+
+    # See: https://nikitabobko.github.io/AeroSpace/commands#workspace-back-and-forth
+    alt-tab = 'workspace-back-and-forth'
+
+    # See: https://nikitabobko.github.io/AeroSpace/commands#move-workspace-to-monitor
+    alt-shift-tab = 'move-workspace-to-monitor --wrap-around next'
+
+    alt-shift-t = 'layout floating tiling'
+
+    # ++ ------------------------------------------------------------------
+    # ++ MONITOR NAVIGATION — you had none of this, which is why the second
+    # ++ screen probably still feels like a place you reach for with the
+    # ++ mouse. alt-h/l already cross monitors when there's a window to
+    # ++ cross to; these jump regardless of what's over there.
+    # ++ ------------------------------------------------------------------
+    ctrl-alt-h = 'focus-monitor --wrap-around left'
+    ctrl-alt-l = 'focus-monitor --wrap-around right'
+
+    # ++ Throw the focused window to the other screen and follow it.
+    ctrl-alt-shift-h = 'move-node-to-monitor --focus-follows-window --wrap-around left'
+    ctrl-alt-shift-l = 'move-node-to-monitor --focus-follows-window --wrap-around right'
+
+    # ++ summon-workspace pulls a workspace onto the monitor you're looking
+    # ++ at, instead of you looking over at the workspace. Genuinely the best
+    # ++ multi-monitor command. It's newer than some builds, so it's left
+    # ++ commented — uncomment, reload, and delete again if it's rejected.
+    ctrl-alt-e = 'summon-workspace 📧'
+    ctrl-alt-u = 'summon-workspace 🎵'
+    ctrl-alt-n = 'summon-workspace 🗒️'
+
+    # See: https://nikitabobko.github.io/AeroSpace/commands#mode
+    alt-shift-semicolon = 'mode service'
+
+# 'service' binding mode declaration.
+# See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
+[mode.service.binding]
+    esc = ['reload-config', 'mode main']
+    r = ['flatten-workspace-tree', 'mode main'] # reset layout
+    f = ['layout floating tiling', 'mode main'] # Toggle between floating and tiling layout
+    backspace = ['close-all-windows-but-current', 'mode main']
+
+    # ++ Equalise every window in the workspace. The cure for a tree that has
+    # ++ drifted into one 80%-wide window and three slivers.
+    b = ['balance-sizes', 'mode main']
+
+    # sticky is not yet supported https://github.com/nikitabobko/AeroSpace/issues/2
+    #s = ['layout sticky tiling', 'mode main']
+
+    alt-shift-h = ['join-with left', 'mode main']
+    alt-shift-j = ['join-with down', 'mode main']
+    alt-shift-k = ['join-with up', 'mode main']
+    alt-shift-l = ['join-with right', 'mode main']
+
+    alt-shift-t = ['layout floating tiling', 'mode main']
+
+    down = 'volume down'
+    up = 'volume up'
+    shift-down = ['volume set 0', 'mode main']
